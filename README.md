@@ -1,39 +1,41 @@
-gulp-svgstore [![Build Status](https://api.travis-ci.org/w0rm/gulp-svgstore.svg)](https://travis-ci.org/w0rm/gulp-svgstore)
+gulp-md-svgstore 
 =============
 
 <img align="right" width="130" height="175"
      title="SVG Superman"
      src="https://raw.githubusercontent.com/w0rm/gulp-svgstore/master/svg-superman.png">
+     
+This is a fork of [gulp-svgstore](https://github.com/w0rm/gulp-svgstore) with refactoring to support
+Angular Material.
 
-Combine svg files into one with `<symbol>` elements.  
-Read more about this in [CSS Tricks article](http://css-tricks.com/svg-symbol-good-choice-icons/).
+Combine svg files into one with `<svg>` elements.  
 
-If you need similar plugin for grunt,  
-I encourage you to check [grunt-svgstore](https://github.com/FWeinb/grunt-svgstore).
+Create a [Material 2 compatible sprite sheet](https://raw.githubusercontent.com/angular/material2/master/src/demo-app/icon/assets/core-icon-set.svg)
+ to use with Material's `addSvgIconSetInNamespace`, see [Material 2 demo](https://github.com/angular/material2/blob/master/src/demo-app/icon/icon-demo.ts)
+
 
 ### Options:
 
 The following options are set automatically based on file data:
 
-* `id` attribute of the `<symbol>` element is set to the name of corresponding file;
-* result filename is the name of base directory of the first file.
+* `keepIds` — keeps the `id` attribute of the svg file. If no `id` is provide, the filename is used as an `id`.
+* `outputFilename` — file name of the result file. If `outputFilename` is not provided, 
+* `inlineSvg` — output only `<svg>` element without `<?xml ?>` and `DOCTYPE` to use inline, default: `false`.
 
 If your workflow is different, please use `gulp-rename` to rename sources or result.
 
-The only available option is:
-
-* inlineSvg — output only `<svg>` element without `<?xml ?>` and `DOCTYPE` to use inline, default: `false`.
+A `filename` attribute is added to each child `svg` to see which file the child came from. This is only for developer reference, and has no functional value.
 
 
 ## Install
 
 ```sh
-npm install gulp-svgstore --save-dev
+npm install gulp-md-svgstore --save-dev
 ```
 
 ## Usage
 
-The following script will combine all svg sources into single svg file with `<symbol>` elements.
+The following script will combine all svg sources into single svg file with `<svg>` elements.
 The name of result svg is the base directory name of the first file `src.svg`.
 
 Additionally pass through [gulp-svgmin](https://github.com/ben-eb/gulp-svgmin)
@@ -41,27 +43,54 @@ to minify svg and ensure unique ids.
 
 ```js
 var gulp = require('gulp');
-var svgstore = require('gulp-svgstore');
+var svgstore = require('gulp-md-svgstore');
 var svgmin = require('gulp-svgmin');
 var path = require('path');
 
 gulp.task('svgstore', function () {
     return gulp
         .src('test/src/*.svg')
-        .pipe(svgmin(function (file) {
-            var prefix = path.basename(file.relative, path.extname(file.relative));
-            return {
-                plugins: [{
-                    cleanupIDs: {
-                        prefix: prefix + '-',
-                        minify: true
-                    }
-                }]
-            }
-        }))
-        .pipe(svgstore())
+
+        .pipe(svgstore({
+                 outputFilename: 'core-icon-set.svg',
+                 keepIds: true,
+                 inlineSvg: true
+         }))
         .pipe(gulp.dest('test/dest'));
 });
+```
+
+With the above configuration the files in `test/src`: 
+
+file: `ic_home_24px.svg`
+```xml
+
+<svg id="home" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+     viewBox="0 0 24 24">
+    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+</svg>
+```
+
+file: `ic_settings_24px.svg`
+```xml
+
+<svg id="settings" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+
+```
+
+Will product the result `core-icon-set.svg`:
+```xml
+<svg>
+  <defs>
+    <svg id="home" filename="ic_home_24px.svg" viewBox="0 0 24 24" width="24" height="24">
+      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+    </svg>
+    <svg id="settings" filename="ic_settings_24px.svg" viewBox="0 0 24 24" width="24" height="24">
+      <path
+        d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+    </svg>
+  </defs>
+</svg>
 ```
 
 ### Inlining svgstore result into html body

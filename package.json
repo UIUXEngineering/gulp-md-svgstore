@@ -1,5 +1,5 @@
 {
-  "name": "gulp-ng-svgstore",
+  "name": "gulp-md-svgstore",
   "version": "6.1.0",
   "description": "Combine svg files into one with <svg> elements",
   "main": "index.js",

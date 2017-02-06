@@ -10,18 +10,20 @@ module.exports = function (config) {
   var namespaces = {}
   var isEmpty = true
   var outputFilename = config.outputFilename || null
-// var inlineSvg = config.inlineSvg || false
+  var inlineSvg = config.inlineSvg || false
   var keepIds = config.keepIds || false
   var ids = {}
 
-  var resultSvg = '<svg><defs/></svg>'
-// if (!inlineSvg) {
-//   resultSvg =
-//     '<?xml version="1.0" encoding="UTF-8"?>' +
-//     '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ' +
-//     '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' +
-//     resultSvg
-// }
+  var resultSvg = '';
+  if (!inlineSvg) {
+    resultSvg =
+      '<?xml version="1.0" encoding="UTF-8"?>' +
+      '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ' +
+      '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' +
+      '<svg xmlns="http://www.w3.org/2000/svg"><defs/></svg>';
+  } else {
+    resultSvg = '<svg><defs/></svg>';
+  }
 
   var $ = cheerio.load(resultSvg, {xmlMode: true})
   var $combinedSvg = $('svg')
@@ -128,7 +130,7 @@ module.exports = function (config) {
     }
 
     $childSVG.append($svg.contents())
-    $combinedSvg.append($childSVG)
+    $combinedDefs.append($childSVG)
     cb()
   }
 
