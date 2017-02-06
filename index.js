@@ -9,25 +9,26 @@ module.exports = function (config) {
 
   var namespaces = {}
   var isEmpty = true
-  var fileName
-  var inlineSvg = config.inlineSvg || false
+  var outputFilename = config.outputFilename || null
+// var inlineSvg = config.inlineSvg || false
+  var keepIds = config.keepIds || false
   var ids = {}
 
-  var resultSvg = '<svg xmlns="http://www.w3.org/2000/svg"><defs/></svg>'
-  if (!inlineSvg) {
-    resultSvg =
-      '<?xml version="1.0" encoding="UTF-8"?>' +
-      '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ' +
-      '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' +
-      resultSvg
-  }
+  var resultSvg = '<svg><defs/></svg>'
+// if (!inlineSvg) {
+//   resultSvg =
+//     '<?xml version="1.0" encoding="UTF-8"?>' +
+//     '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ' +
+//     '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' +
+//     resultSvg
+// }
 
-  var $ = cheerio.load(resultSvg, { xmlMode: true })
+  var $ = cheerio.load(resultSvg, {xmlMode: true})
   var $combinedSvg = $('svg')
   var $combinedDefs = $('defs')
-  var stream = new Stream.Transform({ objectMode: true })
+  var stream = new Stream.Transform({objectMode: true})
 
-  stream._transform = function transform (file, encoding, cb) {
+  stream._transform = function transform(file, encoding, cb) {
 
     if (file.isStream()) {
       return cb(new gutil.PluginError('gulp-svgstore', 'Streams are not supported!'))
@@ -36,27 +37,36 @@ module.exports = function (config) {
     if (file.isNull()) return cb()
 
 
-    var $svg = cheerio.load(file.contents.toString(), { xmlMode: true })('svg')
+    var $svg = cheerio.load(file.contents.toString(), {xmlMode: true})('svg')
 
     if ($svg.length === 0) return cb()
 
-    var idAttr = path.basename(file.relative, path.extname(file.relative))
-    var viewBoxAttr = $svg.attr('viewBox')
-    var preserveAspectRatioAttr = $svg.attr('preserveAspectRatio')
-    var $symbol = $('<symbol/>')
+    var fileId = $svg.attr('id')
+    var filename = path.basename(file.relative, path.extname(file.relative))
 
-    if (idAttr in ids) {
-      return cb(new gutil.PluginError('gulp-svgstore', 'File name should be unique: ' + idAttr))
+    if (!fileId || !keepIds) {
+      fileId = filename;
     }
 
-    ids[idAttr] = true
+    var viewBoxAttr = $svg.attr('viewBox')
+    var preserveAspectRatioAttr = $svg.attr('preserveAspectRatio')
+    var width = $svg.attr('width')
+    var height = $svg.attr('height')
 
-    if (!fileName) {
-      fileName = path.basename(file.base)
-      if (fileName === '.' || !fileName) {
-        fileName = 'svgstore.svg'
+    var $childSVG = $('<svg/>')
+
+    if (fileId in ids) {
+      return cb(new gutil.PluginError('gulp-svgstore', 'File name should be unique: ' + filename))
+    }
+
+    ids[fileId] = true
+
+    if (!outputFilename) {
+      outputFilename = path.basename(file.base)
+      if (outputFilename === '.' || !outputFilename) {
+        outputFilename = 'svgstore.svg'
       } else {
-        fileName = fileName.split(path.sep).shift() + '.svg'
+        outputFilename = outputFilename.split(path.sep).shift() + '.svg'
       }
     }
 
@@ -64,12 +74,20 @@ module.exports = function (config) {
       isEmpty = false
     }
 
-    $symbol.attr('id', idAttr)
+    $childSVG.attr('id', fileId)
+    $childSVG.attr('filename', filename + '.svg')
+
     if (viewBoxAttr) {
-      $symbol.attr('viewBox', viewBoxAttr)
+      $childSVG.attr('viewBox', viewBoxAttr)
     }
     if (preserveAspectRatioAttr) {
-      $symbol.attr('preserveAspectRatio', preserveAspectRatioAttr)
+      $childSVG.attr('preserveAspectRatio', preserveAspectRatioAttr)
+    }
+    if (width) {
+      $childSVG.attr('width', width)
+    }
+    if (height) {
+      $childSVG.attr('height', height)
     }
 
     var attrs = $svg[0].attribs
@@ -91,9 +109,9 @@ module.exports = function (config) {
             if (namespaces[nsName] === attrNs) {
               gutil.log(gutil.colors.yellow(
                 'Same namespace value under different names : ' +
-                  nsName +
-                  ' and ' +
-                  attrName +
+                nsName +
+                ' and ' +
+                attrName +
                 '.\nKeeping both.'
               ))
             }
@@ -109,12 +127,12 @@ module.exports = function (config) {
       $defs.remove()
     }
 
-    $symbol.append($svg.contents())
-    $combinedSvg.append($symbol)
+    $childSVG.append($svg.contents())
+    $combinedSvg.append($childSVG)
     cb()
   }
 
-  stream._flush = function flush (cb) {
+  stream._flush = function flush(cb) {
     if (isEmpty) return cb()
     if ($combinedDefs.contents().length === 0) {
       $combinedDefs.remove()
@@ -122,7 +140,7 @@ module.exports = function (config) {
     for (var nsName in namespaces) {
       $combinedSvg.attr(nsName, namespaces[nsName])
     }
-    var file = new gutil.File({ path: fileName, contents: new Buffer($.xml()) })
+    var file = new gutil.File({path: outputFilename, contents: new Buffer($.xml())})
     this.push(file)
     cb()
   }

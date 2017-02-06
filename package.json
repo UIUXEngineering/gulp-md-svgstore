@@ -1,7 +1,7 @@
 {
-  "name": "gulp-svgstore",
+  "name": "gulp-ng-svgstore",
   "version": "6.1.0",
-  "description": "Combine svg files into one with <symbol> elements",
+  "description": "Combine svg files into one with <svg> elements",
   "main": "index.js",
   "files": [
     "index.js"
@@ -11,17 +11,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/w0rm/gulp-svgstore"
+    "url": "git://github.com/UIUXEngineering/gulp-ng-svgstore"
   },
   "author": {
-    "name": "Andrey Kuzmin",
-    "email": "unsoundscapes@gmail.com"
+    "name": "Jerry Orta",
+    "email": "jerryorta.dev@gmail.com"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/w0rm/gulp-svgstore/issues"
+    "url": "https://github.com/UIUXEngineering/gulp-ng-svgstore/issues"
   },
-  "homepage": "https://github.com/w0rm/gulp-svgstore",
+  "homepage": "https://github.com/UIUXEngineering/gulp-ng-svgstore",
   "dependencies": {
     "cheerio": "0.*",
     "gulp-util": "^3.0.0"
