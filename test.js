@@ -8,78 +8,80 @@ var wd = require('wd')
 var assert = require('assert')
 var Q = wd.Q
 var svgstore = require('./index')
-var gutil = require('gulp-util')
+// var gutil = require('gulp-util')
 var cheerio = require('cheerio')
 var sinon = require('sinon')
 var finalhandler = require('finalhandler')
 var serveStatic = require('serve-static')
 var http = require('http')
 var sandbox = sinon.sandbox.create()
+var Vinyl = require('vinyl');
+var chalk = require('chalk');
 
 
-describe('gulp-svgstore usage test', function () {
+// describe('gulp-svgstore usage test', function () {
+//
+//   this.timeout(10 * 1000)
+//
+//   var browser
+//   var serve = serveStatic('test')
+//   var server = http.createServer(function(req, res){
+//     var done = finalhandler(req, res)
+//     serve(req, res, done)
+//   })
 
-  this.timeout(10 * 1000)
+  // before(function () {
+    // browser = wd.promiseChainRemote('ondemand.saucelabs.com', 80, username, accessKey)
+    // return Q.all([
+    //   browser.init({
+    //     browserName: 'chrome'
+    //   , 'tunnel-identifier': tunnelIdentifier
+    //   }),
+    //   Q.Promise(function (resolve) {
+    //     server.listen(process.env.PORT || 8888, function () {
+    //       resolve()
+    //     })
+    //   })
+    // ])
+  // })
 
-  var browser
-  var serve = serveStatic('test')
-  var server = http.createServer(function(req, res){
-    var done = finalhandler(req, res)
-    serve(req, res, done)
-  })
+  // after(function () {
+    // return Q.all([
+    //   browser.quit().then(function(){}),
+    //   Q.Promise(function (resolve) {
+    //     server.close()
+    //     server.unref()
+    //     resolve()
+    //   })
+    // ])
+  // })
 
-  before(function () {
-    browser = wd.promiseChainRemote('ondemand.saucelabs.com', 80, username, accessKey)
-    return Q.all([
-      browser.init({
-        browserName: 'chrome'
-      , 'tunnel-identifier': tunnelIdentifier
-      }),
-      Q.Promise(function (resolve) {
-        server.listen(process.env.PORT || 8888, function () {
-          resolve()
-        })
-      })
-    ])
-  })
-
-  after(function () {
-    return Q.all([
-      browser.quit().then(function(){}),
-      Q.Promise(function (resolve) {
-        server.close()
-        server.unref()
-        resolve()
-      })
-    ])
-  })
-
-  it('stored image should equal original svg', function () {
-    var screenshot1
-    return browser
-      .get('http://localhost:' + port + '/inline-svg.html')
-      .title()
-      .then(function (title) {
-        assert.equal(title, 'gulp-svgstore', 'Test page is not loaded')
-      })
-      .takeScreenshot()
-      .then(function (data) {
-        screenshot1 = data
-      })
-      .get('http://localhost:' + port + '/dest/inline-svg.html')
-      .takeScreenshot()
-      .then(function (screenshot2) {
-        assert(screenshot1.toString() === screenshot2.toString(), 'Screenshots are different')
-      })
-  })
-
-})
+//   it('stored image should equal original svg', function () {
+//     var screenshot1
+//     return browser
+//       .get('http://localhost:' + port + '/inline-svg.html')
+//       .title()
+//       .then(function (title) {
+//         assert.equal(title, 'gulp-svgstore', 'Test page is not loaded')
+//       })
+//       .takeScreenshot()
+//       .then(function (data) {
+//         screenshot1 = data
+//       })
+//       .get('http://localhost:' + port + '/dest/inline-svg.html')
+//       .takeScreenshot()
+//       .then(function (screenshot2) {
+//         assert(screenshot1.toString() === screenshot2.toString(), 'Screenshots are different')
+//       })
+//   })
+//
+// })
 
 
 describe('gulp-svgstore unit test', function () {
 
   beforeEach(function () {
-    sandbox.stub(gutil, 'log')
+    sandbox.stub(console, 'log')
   })
 
   afterEach(function () {
@@ -111,21 +113,20 @@ describe('gulp-svgstore unit test', function () {
     stream.on('data', function (file) {
       var result = file.contents.toString()
       var target =
-      '<svg xmlns="http://www.w3.org/2000/svg">' +
-      '<symbol id="circle" viewBox="0 0 4 4" preserveAspectRatio="xMinYMid meet"><circle cx="2" cy="2" r="1"/></symbol>' +
-      '<symbol id="square"><rect x="1" y="1" width="2" height="2"/></symbol>' +
-      '</svg>'
+      '<svg><defs><svg id="circle" filename="circle.svg" viewBox="0 0 4 4" preserveAspectRatio="xMinYMid meet">' +
+          '<circle cx="2" cy="2" r="1"/></svg><svg id="square" filename="square.svg">' +
+          '<rect x="1" y="1" width="2" height="2"/></svg></defs></svg>'
       assert.equal( result, target )
       done()
     })
 
-    stream.write(new gutil.File({
-      contents: new Buffer('<svg viewBox="0 0 4 4" preserveAspectRatio="xMinYMid meet"><circle cx="2" cy="2" r="1"/></svg>')
+    stream.write(new Vinyl({
+      contents: Buffer.from('<svg viewBox="0 0 4 4" preserveAspectRatio="xMinYMid meet"><circle cx="2" cy="2" r="1"/></svg>')
     , path: 'circle.svg'
     }))
 
-    stream.write(new gutil.File({
-      contents: new Buffer('<svg><rect x="1" y="1" width="2" height="2"/></svg>')
+    stream.write(new Vinyl({
+      contents: Buffer.from('<svg><rect x="1" y="1" width="2" height="2"/></svg>')
     , path: 'square.svg'
     }))
 
@@ -140,25 +141,24 @@ describe('gulp-svgstore unit test', function () {
     stream.on('data', function (file) {
       var result = file.contents.toString()
       var target =
-      '<svg xmlns="http://www.w3.org/2000/svg">' +
-      '<symbol id="circle" viewBox="0 0 4 4"><circle cx="2" cy="2" r="1"/></symbol>' +
-      '</svg>'
+      '<svg><defs><svg id="circle" filename="circle.svg" viewBox="0 0 4 4">' +
+          '<circle cx="2" cy="2" r="1"/></svg></defs></svg>'
       assert.equal( result, target )
       done()
     })
 
-    stream.write(new gutil.File({
-      contents: new Buffer('<svg viewBox="0 0 4 4"><circle cx="2" cy="2" r="1"/></svg>')
+    stream.write(new Vinyl({
+      contents: Buffer.from('<svg viewBox="0 0 4 4"><circle cx="2" cy="2" r="1"/></svg>')
     , path: 'circle.svg'
     }))
 
-    stream.write(new gutil.File({
+    stream.write(new Vinyl({
       contents: null
     , path: 'square.svg'
     }))
 
-    stream.write(new gutil.File({
-      contents: new Buffer('not an svg')
+    stream.write(new Vinyl({
+      contents: Buffer.from('not an svg')
     , path: 'square.svg'
     }))
 
@@ -173,16 +173,14 @@ describe('gulp-svgstore unit test', function () {
     stream.on('data', function(file){
       var result = file.contents.toString()
       var target =
-        '<svg xmlns="http://www.w3.org/2000/svg">' +
-        '<defs><circle id="circ" cx="2" cy="2" r="1"/></defs>' +
-        '<symbol id="circle" viewBox="0 0 4 4"/>' +
-        '</svg>'
+        '<svg><defs><circle id="circ" cx="2" cy="2" r="1"/>' +
+          '<svg id="circle" filename="circle.svg" viewBox="0 0 4 4"/></defs></svg>'
       assert.equal( result, target )
       done()
     })
 
-    stream.write(new gutil.File({
-      contents: new Buffer(
+    stream.write(new Vinyl({
+      contents: Buffer.from(
         '<svg viewBox="0 0 4 4">' +
         '<defs><circle id="circ" cx="2" cy="2" r="1"/></svg></defs>' +
         '<circle cx="2" cy="2" r="1"/>' +
@@ -200,13 +198,13 @@ describe('gulp-svgstore unit test', function () {
       var stream = svgstore()
 
       stream.on('error', function (error) {
-        assert.ok(error instanceof gutil.PluginError)
-        assert.equal(error.message, 'File name should be unique: circle')
+        assert.ok(error instanceof Error)
+        assert.equal(error.message, 'gulp-svgstore File name should be unique: circle')
         done()
       })
 
-      stream.write(new gutil.File({ contents: new Buffer('<svg></svg>'), path: 'circle.svg' }))
-      stream.write(new gutil.File({ contents: new Buffer('<svg></svg>'), path: 'circle.svg' }))
+      stream.write(new Vinyl({ contents: Buffer.from('<svg></svg>'), path: 'circle.svg' }))
+      stream.write(new Vinyl({ contents: Buffer.from('<svg></svg>'), path: 'circle.svg' }))
 
       stream.end()
 
@@ -221,14 +219,14 @@ describe('gulp-svgstore unit test', function () {
         done()
       })
 
-      stream.write(new gutil.File({
-        contents: new Buffer('<svg/>')
+      stream.write(new Vinyl({
+        contents: Buffer.from('<svg/>')
       , path: 'src/icons/circle.svg'
       , base: 'src/icons'
       }))
 
-      stream.write(new gutil.File({
-        contents: new Buffer('<svg/>')
+      stream.write(new Vinyl({
+        contents: Buffer.from('<svg/>')
       , path: 'src2/icons2/square.svg'
       , base: 'src2/icons2'
       }))
@@ -246,14 +244,14 @@ describe('gulp-svgstore unit test', function () {
         done()
       })
 
-      stream.write(new gutil.File({
-        contents: new Buffer('<svg/>')
+      stream.write(new Vinyl({
+        contents: Buffer.from('<svg/>')
       , path: 'circle.svg'
       , base: '.'
       }))
 
-      stream.write(new gutil.File({
-        contents: new Buffer('<svg/>')
+      stream.write(new Vinyl({
+        contents: Buffer.from('<svg/>')
       , path: 'src2/icons2/square.svg'
       , base: 'src2'
       }))
@@ -274,16 +272,16 @@ describe('gulp-svgstore unit test', function () {
         done()
       })
 
-      stream.write(new gutil.File({
-        contents: new Buffer(
+      stream.write(new Vinyl({
+        contents: Buffer.from(
           '<svg xmlns="http://www.w3.org/2000/svg">' +
             '<rect width="1" height="1"/>' +
           '</svg>')
       , path: 'rect.svg'
       }))
 
-      stream.write(new gutil.File({
-        contents: new Buffer(
+      stream.write(new Vinyl({
+        contents: Buffer.from(
           '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"' +
               'viewBox="0 0 50 50">' +
             '<rect id="a" width="50" height="10"/>' +
@@ -303,22 +301,23 @@ describe('gulp-svgstore unit test', function () {
 
       stream.on('data', function (file) {
         assert.equal(
-          '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
-          '<symbol id="rect"/><symbol id="sandwich"/></svg>',
+          '<svg xmlns:xlink="http://www.w3.org/1999/xlink"><defs>' +
+            '<svg id="rect" filename="rect.svg"/>' +
+            '<svg id="sandwich" filename="sandwich.svg"/></defs></svg>',
           file.contents.toString()
         )
         done()
       })
 
-      stream.write(new gutil.File({
-        contents: new Buffer(
+      stream.write(new Vinyl({
+        contents: Buffer.from(
           '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"/>'
         )
       , path: 'rect.svg'
       }))
 
-      stream.write(new gutil.File({
-        contents: new Buffer(
+      stream.write(new Vinyl({
+        contents: Buffer.from(
           '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"/>'
         )
       , path: 'sandwich.svg'
@@ -334,17 +333,17 @@ describe('gulp-svgstore unit test', function () {
 
       stream.on('data', function () {
         assert.equal(
-          gutil.colors.yellow(
+          chalk.yellow(
             'Same namespace value under different names : xmlns:lk and xmlns:xlink.\n' +
             'Keeping both.'
           ),
-          gutil.log.getCall(0).args[0]
+          console.log.getCall(0).args[0]
         )
         done()
       })
 
-      stream.write(new gutil.File({
-        contents: new Buffer(
+      stream.write(new Vinyl({
+        contents: Buffer.from(
           '<svg xmlns="http://www.w3.org/2000/svg" xmlns:lk="http://www.w3.org/1999/xlink">' +
             '<rect id="a" width="1" height="1"/>' +
             '<use y="2" lk:href="#a"/>' +
@@ -352,8 +351,8 @@ describe('gulp-svgstore unit test', function () {
       , path: 'rect.svg'
       }))
 
-      stream.write(new gutil.File({
-        contents: new Buffer(
+      stream.write(new Vinyl({
+        contents: Buffer.from(
           '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"' +
               'viewBox="0 0 50 50">' +
             '<rect id="a" width="50" height="10"/>' +
@@ -373,18 +372,18 @@ describe('gulp-svgstore unit test', function () {
 
       stream.on('data', function () {
         assert.equal(
-          gutil.colors.red(
+          chalk.red(
             'xmlns:xlink namespace appeared multiple times with different value. ' +
             'Keeping the first one : "http://www.w3.org/1998/xlink".\n' +
             'Each namespace must be unique across files.'
           ),
-          gutil.log.getCall(0).args[0]
+          console.log.getCall(0).args[0]
         )
         done()
       })
 
-      stream.write(new gutil.File({
-        contents: new Buffer(
+      stream.write(new Vinyl({
+        contents: Buffer.from(
           '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1998/xlink">' +
             '<rect id="a" width="1" height="1"/>' +
             '<use y="2" xlink:href="#a"/>' +
@@ -392,8 +391,8 @@ describe('gulp-svgstore unit test', function () {
       , path: 'rect.svg'
       }))
 
-      stream.write(new gutil.File({
-        contents: new Buffer(
+      stream.write(new Vinyl({
+        contents: Buffer.from(
           '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"' +
               'viewBox="0 0 50 50">' +
             '<rect id="a" width="50" height="10"/>' +

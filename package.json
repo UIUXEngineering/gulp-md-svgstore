@@ -1,6 +1,6 @@
 {
   "name": "gulp-md-svgstore",
-  "version": "6.1.0",
+  "version": "7.0.0",
   "description": "Combine svg files into one with <svg> elements",
   "main": "index.js",
   "files": [
@@ -23,17 +23,18 @@
   },
   "homepage": "https://github.com/UIUXEngineering/gulp-ng-svgstore",
   "dependencies": {
+    "chalk": "^2.4.2",
     "cheerio": "0.*",
-    "gulp-util": "^3.0.0"
+    "vinyl": "^2.2.0"
   },
   "devDependencies": {
-    "finalhandler": "^0.5.0",
-    "gulp": "^3.6.2",
+    "finalhandler": "^1.1.1",
+    "gulp": "^4.0.0",
     "gulp-inject": "^4.1.0",
-    "mocha": "^3.0.2",
+    "mocha": "^5.2.0",
     "serve-static": "^1.9.3",
     "sinon": "^1.16.1",
-    "wd": "^0.4.0"
+    "wd": "^1.11.1"
   },
   "keywords": [
     "gulpplugin",

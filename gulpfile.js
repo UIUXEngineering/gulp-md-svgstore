@@ -30,4 +30,6 @@ gulp.task('inline', function () {
 
 })
 
-gulp.task('build', ['external', 'inline'])
+gulp.task('build', gulp.series('external', 'inline', function (done) {
+  done();
+}));

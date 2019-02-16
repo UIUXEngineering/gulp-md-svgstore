@@ -1,7 +1,8 @@
-var cheerio = require('cheerio')
-var path = require('path')
-var gutil = require('gulp-util')
-var Stream = require('stream')
+var cheerio = require('cheerio');
+var path = require('path');
+var Stream = require('stream');
+var chalk = require('chalk');
+var Vinyl = require('vinyl');
 
 module.exports = function (config) {
 
@@ -33,7 +34,7 @@ module.exports = function (config) {
   stream._transform = function transform(file, encoding, cb) {
 
     if (file.isStream()) {
-      return cb(new gutil.PluginError('gulp-svgstore', 'Streams are not supported!'))
+      return cb(new Error('gulp-svgstore Streams are not supported!'))
     }
 
     if (file.isNull()) return cb()
@@ -58,7 +59,7 @@ module.exports = function (config) {
     var $childSVG = $('<svg/>')
 
     if (fileId in ids) {
-      return cb(new gutil.PluginError('gulp-svgstore', 'File name should be unique: ' + filename))
+      return cb(new Error('gulp-svgstore File name should be unique: ' + filename))
     }
 
     ids[fileId] = true
@@ -100,7 +101,7 @@ module.exports = function (config) {
 
         if (storedNs !== undefined) {
           if (storedNs !== attrNs) {
-            gutil.log(gutil.colors.red(
+            console.log(chalk.red(
               attrName + ' namespace appeared multiple times with different value.' +
               ' Keeping the first one : "' + storedNs +
               '".\nEach namespace must be unique across files.'
@@ -109,7 +110,7 @@ module.exports = function (config) {
         } else {
           for (var nsName in namespaces) {
             if (namespaces[nsName] === attrNs) {
-              gutil.log(gutil.colors.yellow(
+              console.log(chalk.yellow(
                 'Same namespace value under different names : ' +
                 nsName +
                 ' and ' +
@@ -142,7 +143,7 @@ module.exports = function (config) {
     for (var nsName in namespaces) {
       $combinedSvg.attr(nsName, namespaces[nsName])
     }
-    var file = new gutil.File({path: outputFilename, contents: new Buffer($.xml())})
+    var file = new Vinyl({path: outputFilename, contents:  Buffer.from($.xml())})
     this.push(file)
     cb()
   }
